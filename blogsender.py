@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import ttk
 import xmlrpc.client
 from tkinter import messagebox
-
+#author wbyu123
 root = Tk()
 root.title("BLOG 日志发送器")
 
