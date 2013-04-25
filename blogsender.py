@@ -3,6 +3,9 @@ from tkinter import ttk
 from xmlrpc import client
 from tkinter import messagebox
 import yaml
+import time
+import threading
+import os
 
 #author wbyu123
 root = Tk()
@@ -19,7 +22,7 @@ method = StringVar()  #远程方法名
 title=StringVar()   #标题
 category=StringVar()   #类别
 englishname=StringVar()   #英文名
-content=StringVar()   #内容
+
 
 
 
@@ -27,9 +30,12 @@ f = open('config.yaml')
 # use safe_load instead load
 dataMap = yaml.safe_load(f)
 
+f = open('config.yaml')
+# use safe_load instead load
+dataMap = yaml.safe_load(f)
+
 url.set(dataMap['url'])
 method.set(dataMap['method'])
-
 
 
 ttk.Label(mainframe, text="服务器地址:").grid(column=0, row=1, sticky=E)
@@ -63,23 +69,58 @@ feet_entry.grid(column=1, columnspan=3,row=4, sticky=(W, E))
 
 ttk.Label(mainframe, text="内容:").grid( column=0,row=5, sticky=E)
 
-t = Text(mainframe, width=70, height=40)
-t.grid(column=1,columnspan=3,row=5, sticky=(W, E))
+content = Text(mainframe, width=70, height=40)
+content.grid(column=1,columnspan=3,row=5, sticky=(W, E))
+
+
 
 def send():
-	try:
-		proxy = client.ServerProxy(url.get())
-		categoryid=dataMap['categorys'][category.get()]
-		script="proxy.{0}(title.get(),t.get(1.0,END),categoryid,englishname.get())".format(method.get());
-		result = exec(script)
-		messagebox.showinfo(message='发送成功')
-	except Exception as inst:
-		strg="发送失败:"+ str(inst)
-		messagebox.showinfo(message=strg)
+    try:
+        proxy = client.ServerProxy(url.get())
+        categoryid=dataMap['categorys'][category.get()]
+        script="proxy.{0}(title.get(),content.get(1.0,END),categoryid,englishname.get())".format(method.get());
+        result = exec(script)
+        messagebox.showinfo(message='发送成功')
+    except Exception as inst:
+        strg="发送失败:"+ str(inst)
+        messagebox.showinfo(message=strg)
 
 def insercode(*args):
-	t.insert(END,'<pre class="{0}" name="code">\n</pre>'.format(codenum.get()))
-	
+    content.insert(END,'\n<pre class="{0}" name="code">\n\n</pre>'.format(codenum.get()))
+
+if not os.path.exists("data"):
+	os.mkdir("data")
+
+if not os.path.exists("blogs.yaml"):
+	open('blogs.yaml','w')
+    
+#历史保留的博客  
+blogsfile = open('blogs.yaml','r')
+histroyblogs =  yaml.safe_load(blogsfile)
+
+id=-1
+def autosave():
+    global id,histroyblogs
+     #每1分钟保存一次
+    #为它生成一个新的id
+    while 1:
+      time.sleep(10) 
+      if id==-1:
+        id=str(time.time()).replace('.','')
+        print(id)
+        if histroyblogs is None:
+           histroyblogs=dict()
+        histroyblogs['id'] = id
+        histroyblogs['title'] = title.get()
+        blogsfile = open('blogs.yaml','a')
+        yaml.dump(histroyblogs,blogsfile)
+      blogfile = open("data/"+id,"w")
+      blogfile.write(content.get(1.0,END))
+
+autosavethread = threading.Thread(target=autosave)       
+autosavethread.start()
+
+    
 codeinsert.bind('<<ComboboxSelected>>', insercode)
 ttk.Button(mainframe, text="发送", command=send).grid(column=2, row=6, sticky=(W, E))
 
