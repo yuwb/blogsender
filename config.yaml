@@ -1,0 +1,8 @@
+url: 
+method: newPost
+categorys:
+        php: 11
+        python: 7
+        css: 12
+        javascript: 9
+        other: 13
