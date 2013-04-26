@@ -75,11 +75,14 @@ content.grid(column=1,columnspan=3,row=5, sticky=(W, E))
 
 
 def send():
+    global id
     try:
         proxy = client.ServerProxy(url.get())
         categoryid=dataMap['categorys'][category.get()]
         script="proxy.{0}(title.get(),content.get(1.0,END),categoryid,englishname.get())".format(method.get());
         result = exec(script)
+        histroyblogs[id]['status'] = '1'
+        writehistroyblogs()
         messagebox.showinfo(message='发送成功')
     except Exception as inst:
         strg="发送失败:"+ str(inst)
@@ -89,10 +92,10 @@ def insercode(*args):
     content.insert(END,'\n<pre class="{0}" name="code">\n\n</pre>'.format(codenum.get()))
 
 if not os.path.exists("data"):
-	os.mkdir("data")
+    os.mkdir("data")
 
 if not os.path.exists("blogs.yaml"):
-	open('blogs.yaml','w')
+    open('blogs.yaml','w')
     
 #历史保留的博客  
 blogsfile = open('blogs.yaml','r')
@@ -103,19 +106,33 @@ def autosave():
     global id,histroyblogs
      #每1分钟保存一次
     #为它生成一个新的id
-    while 1:
-      time.sleep(10) 
-      if id==-1:
+    if id==-1:
         id=str(time.time()).replace('.','')
         print(id)
         if histroyblogs is None:
            histroyblogs=dict()
-        histroyblogs['id'] = id
-        histroyblogs['title'] = title.get()
-        blogsfile = open('blogs.yaml','a')
-        yaml.dump(histroyblogs,blogsfile)
-      blogfile = open("data/"+id,"w")
-      blogfile.write(content.get(1.0,END))
+    while 1:
+      time.sleep(10) 
+      if histroyblogs.get(id) is None: 
+        histroyblogs[id] =dict() 
+      histroyblogs[id]['title']=title.get()
+      histroyblogs[id]['status'] = '0'
+      histroyblogs[id]['englishname'] = englishname.get()
+      writehistroyblogs()
+      writecontent()
+
+def writehistroyblogs():
+    global histroyblogs
+    blogsfile = open('blogs.yaml','w')
+    yaml.dump(histroyblogs,blogsfile)
+    blogsfile.close()
+
+def writecontent():
+    global id
+    datafile = open("data/"+id,"w")
+    datafile.write(content.get(1.0,END))    
+    datafile.close()
+
 
 autosavethread = threading.Thread(target=autosave)       
 autosavethread.start()
