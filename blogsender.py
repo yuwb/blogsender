@@ -8,100 +8,13 @@ import threading
 import os
 
 #author wbyu123
-root = Tk()
-root.title("BLOG 日志发送器")
-
-mainframe = ttk.Frame(root, padding="3 3 12 12")
-mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
-mainframe.columnconfigure(0, weight=1)
-mainframe.rowconfigure(0, weight=1)
-
-
-url = StringVar()  #服务器地址
-title=StringVar()   #标题
-category=StringVar()   #类别
-englishname=StringVar()   #英文名
-publicstatus=StringVar()   #发布状态
-publicstatus.set("未发布")
-
-
-f = open('config.yaml')
-# use safe_load instead load
-dataMap = yaml.safe_load(f)
-url.set(dataMap['url'])
-
-
-if not os.path.exists("data"):
-    os.mkdir("data")
-
-if not os.path.exists("blogs.yaml"):
-    open('blogs.yaml','w')
-
-
-
-ttk.Label(mainframe, text="服务器地址:").grid(column=0, row=1, sticky=E)
-feet_entry = ttk.Entry(mainframe, width=17, textvariable=url)
-feet_entry.grid(column=1, row=1, sticky=(W, E))
-
-ttk.Label(mainframe, text="发布状态:").grid(column=2, row=1, sticky=E)
-ttk.Label(mainframe, textvariable=publicstatus).grid(column=3, row=1, sticky=W)
-
-ttk.Label(mainframe, text="类别:").grid(column=0, row=2, sticky=E)
-categorytag = ttk.Combobox(mainframe, textvariable=category, values=list(dataMap['categorys'].keys()))
-categorytag.grid(column=1, row=2, sticky=(W, E))
-
-ttk.Label(mainframe, text="别名:").grid(column=2, row=2, sticky=E)
-feet_entry = ttk.Entry(mainframe, width=5, textvariable=englishname)
-feet_entry.grid(column=3, row=2, sticky=(W, E))
-
-
-codenum=StringVar()   #代码
-ttk.Label(mainframe, text="插入代码:").grid(column=0, row=3, sticky=E)
-codeinsert = ttk.Combobox(mainframe, textvariable=codenum)
-codeinsert['values'] = ('css', 'javascript', 'python','php','img')
-codeinsert.state(['readonly'])
-codeinsert.grid(column=1, row=3, sticky=(W, E))
-
-
-#历史保留的博客  
-blogsfile = open('blogs.yaml','r')
-histroyblogs =  yaml.safe_load(blogsfile)
-if histroyblogs is None:
-   histroyblogs=dict()
-
-   
-bloglist=[]
-for val in  histroyblogs.values():  
-    bloglist.append(val.get('title'))
-
-
-blogtitle=StringVar()   #历史文章列表
-ttk.Label(mainframe, text="文章列表:").grid(column=2, row=3, sticky=E)
-blogs = ttk.Combobox(mainframe, textvariable=blogtitle)
-blogs['values'] = bloglist
-blogs.state(['readonly'])
-blogs.grid(column=3, row=3, sticky=(W, E))
-
-
-ttk.Label(mainframe, text="标题:").grid(column=0, row=4, sticky=E)
-feet_entry = ttk.Entry(mainframe, width=17, textvariable=title)
-feet_entry.grid(column=1, columnspan=3,row=4, sticky=(W, E))
-
-ttk.Label(mainframe, text="内容:").grid( column=0,row=5, sticky=E)
-
-content = Text(mainframe, width=70, height=40)
-content.grid(column=1,columnspan=3,row=5, sticky=(W, E))
-
-publicstatusmessages={'1':'已发布','0':'未发布','2':'已删除'}
-
-
 def send():
     global id,status
     try:
         proxy = client.ServerProxy(url.get())
         categoryid=dataMap['categorys'][category.get()]
         if status!='1':
-         result=proxy.newPost(title.get(),content.get(1.0,END),categoryid,englishname.get())
+         result=proxy.newPost(title.get(),content.get(1.0,END),categoryid,englishname.get(),publishweibo.get())
         else:
          result=proxy.updatePost(title.get(),content.get(1.0,END),categoryid,englishname.get())
         histroyblogs[id]['status'] = '1'
@@ -119,8 +32,7 @@ def insercode(*args):
     else:
         content.insert(INSERT,'\n<pre class="{0}" name="code">\n\n</pre>'.format(codenum.get()))
 
-id=-1
-status='0'
+
 def autosave():
      #每1分钟保存一次
     #为它生成一个新的id
@@ -188,15 +100,102 @@ def delete():
         messagebox.showinfo(message="该博客未发布过")
     
 
+if __name__ == "__main__":
     
-    
-autosavethread = threading.Thread(target=autosave)       
-autosavethread.start()
-  
-blogs.bind('<<ComboboxSelected>>', selectblog)
-codeinsert.bind('<<ComboboxSelected>>', insercode)
-ttk.Button(mainframe, text="发送", command=send).grid(column=1, row=6, sticky=(W, E))
-ttk.Button(mainframe, text="保存", command=save).grid(column=2, row=6, sticky=(W, E))
-ttk.Button(mainframe, text="删除", command=delete).grid(column=3, row=6, sticky=(W, E))
+    root = Tk()
+    root.title("BLOG 日志发送器")
+    mainframe = ttk.Frame(root, padding="3 3 12 12")
+    mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+    mainframe.columnconfigure(0, weight=1)
+    mainframe.rowconfigure(0, weight=1)
+    url = StringVar()  #服务器地址
+    title=StringVar()   #标题
+    category=StringVar()   #类别
+    englishname=StringVar()   #英文名
+    publicstatus=StringVar()   #发布状态
+    publicstatus.set("未发布")
+    id=-1
+    status='0'
+    publishweibo=StringVar()  #是否发微博
+    publishweibo.set("0")   #默认不发
 
-root.mainloop()
+
+    f = open('config.yaml')
+    # use safe_load instead load
+    dataMap = yaml.safe_load(f)
+    url.set(dataMap['url'])
+    
+    if not os.path.exists("data"):
+        os.mkdir("data")
+
+    if not os.path.exists("blogs.yaml"):
+        open('blogs.yaml','w')
+
+
+    ttk.Label(mainframe, text="服务器地址:").grid(column=0, row=1, sticky=E)
+    feet_entry = ttk.Entry(mainframe, width=17, textvariable=url)
+    feet_entry.grid(column=1, row=1, sticky=(W, E))
+
+    ttk.Label(mainframe, text="发布状态:").grid(column=2, row=1, sticky=E)
+    ttk.Label(mainframe, textvariable=publicstatus).grid(column=3, row=1, sticky=W)
+
+    ttk.Label(mainframe, text="类别:").grid(column=0, row=2, sticky=E)
+    categorytag = ttk.Combobox(mainframe, textvariable=category, values=list(dataMap['categorys'].keys()))
+    categorytag.grid(column=1, row=2, sticky=(W, E))
+
+    ttk.Label(mainframe, text="别名:").grid(column=2, row=2, sticky=E)
+    feet_entry = ttk.Entry(mainframe, width=5, textvariable=englishname)
+    feet_entry.grid(column=3, row=2, sticky=(W, E))
+
+
+    codenum=StringVar()   #代码
+    ttk.Label(mainframe, text="插入代码:").grid(column=0, row=3, sticky=E)
+    codeinsert = ttk.Combobox(mainframe, textvariable=codenum)
+    codeinsert['values'] = ('css', 'javascript', 'python','php','img')
+    codeinsert.state(['readonly'])
+    codeinsert.grid(column=1, row=3, sticky=(W, E))
+    codeinsert.bind('<<ComboboxSelected>>', insercode)
+
+    #历史保留的博客  
+    blogsfile = open('blogs.yaml','r')
+    histroyblogs =  yaml.safe_load(blogsfile)
+    if histroyblogs is None:
+       histroyblogs=dict()
+  
+    bloglist=[]
+    for val in  histroyblogs.values():  
+        bloglist.append(val.get('title'))
+
+
+    blogtitle=StringVar()   #历史文章列表
+    ttk.Label(mainframe, text="文章列表:").grid(column=2, row=3, sticky=E)
+    blogs = ttk.Combobox(mainframe, textvariable=blogtitle)
+    blogs['values'] = bloglist
+    blogs.state(['readonly'])
+    blogs.grid(column=3, row=3, sticky=(W, E))
+    blogs.bind('<<ComboboxSelected>>', selectblog)
+    
+
+    ttk.Label(mainframe, text="标题:").grid(column=0, row=4, sticky=E)
+    feet_entry = ttk.Entry(mainframe, width=17, textvariable=title)
+    feet_entry.grid(column=1, columnspan=2,row=4, sticky=(W, E))
+    
+    ttk.Label(mainframe, text="是否发微博:").grid(column=3, row=4, sticky=W)
+    weibo_pubulish = ttk.Combobox(mainframe,width=10, textvariable=publishweibo,values=['0','1'])
+    weibo_pubulish.grid(column=3, row=4, sticky=E)
+    
+    ttk.Label(mainframe, text="内容:").grid( column=0,row=5, sticky=E)
+
+    content = Text(mainframe, width=70, height=40)
+    content.grid(column=1,columnspan=3,row=5, sticky=(W, E))
+    publicstatusmessages={'1':'已发布','0':'未发布','2':'已删除'}
+    
+    autosavethread = threading.Thread(target=autosave)       
+    autosavethread.start()
+  
+    
+    ttk.Button(mainframe, text="发送", command=send).grid(column=1, row=6, sticky=(W, E))
+    ttk.Button(mainframe, text="保存", command=save).grid(column=2, row=6, sticky=(W, E))
+    ttk.Button(mainframe, text="删除", command=delete).grid(column=3, row=6, sticky=(W, E))
+
+    root.mainloop()
