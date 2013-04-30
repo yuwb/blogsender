@@ -37,7 +37,7 @@ def autosave():
      #每1分钟保存一次
     #为它生成一个新的id
     while 1:
-      time.sleep(10) 
+      time.sleep(60) 
       save()
 
 def save():
@@ -67,6 +67,9 @@ def writecontent():
 
 def selectblog(*args):
     global id,blogtitle,histroyblogs,status
+    if not blogtitle.get():
+        initallparam()
+        return
     for val in  histroyblogs.keys():
         if histroyblogs.get(val).get('title')==blogtitle.get():
             id=val;
@@ -81,6 +84,20 @@ def selectblog(*args):
             datafile.close()
             break;
 
+
+def initallparam():
+    global id,status
+    id=-1
+    status='0'
+    publicstatus.set(publicstatusmessages[status])
+    title.set('')
+    englishname.set('')
+    publicstatus.set("未发布")
+    publishweibo.set("0")   #默认不发
+    codenum.set('')
+    category.set('')
+    content.delete(0.0,END)
+    
             
 def delete():
     global id,status
@@ -88,16 +105,16 @@ def delete():
         try:
             proxy = client.ServerProxy(url.get())
             proxy.deletePost(englishname.get())
-            histroyblogs[id]['status']='2'
-            status='2'
-            writehistroyblogs()
-            publicstatus.set(publicstatusmessages[status])
-            messagebox.showinfo(message='删除成功')
         except Exception as inst:
             strg="删除失败:"+ str(inst)
             messagebox.showinfo(message=strg)
-    else:
-        messagebox.showinfo(message="该博客未发布过")
+            
+    del histroyblogs[id]
+    writehistroyblogs()
+    os.remove("data/"+id)
+    initallparam()
+    publicstatus.set(publicstatusmessages[status])
+    messagebox.showinfo(message='删除成功')
     
 
 if __name__ == "__main__":
@@ -162,7 +179,7 @@ if __name__ == "__main__":
     if histroyblogs is None:
        histroyblogs=dict()
   
-    bloglist=[]
+    bloglist=['']
     for val in  histroyblogs.values():  
         bloglist.append(val.get('title'))
 
