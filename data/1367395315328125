@@ -1,0 +1,27 @@
+1.给字符串加上双引号
+<pre class="python" name="code">
+>>> 'sadf'.join('""')
+'"sadf"'
+</pre>
+2.locals()可收集本地变量
+<pre class="python" name="code">
+>>> aa,bb=2,4
+>>> locals()['aa']
+2
+>>> locals()['bb']
+4
+>>>
+</pre>
+3.一次性替换多个名称
+<pre class="python" name="code">
+>>> def multiple_replace(text,adict):
+...     rx=re.compile('|'.join(map(re.escape,adict)))
+...     def one_xlat(match):
+...             return adict[match.group(0)]
+...     return rx.sub(one_xlat,text)
+...
+>>> multiple_replace('aabbccdd',{'aa':'11','bb':'22','cc':'33'})
+'112233dd'
+</pre>
+
+

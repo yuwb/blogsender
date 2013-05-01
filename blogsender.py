@@ -11,6 +11,7 @@ import os
 def send():
     global id,status
     try:
+        save()
         proxy = client.ServerProxy(url.get())
         categoryid=dataMap['categorys'][category.get()]
         if status!='1':
